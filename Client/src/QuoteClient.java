@@ -47,7 +47,8 @@ public class QuoteClient {
         DatagramSocket socket = new DatagramSocket();
 
         // send request
-        byte[] buf = new byte[256];
+        String s = "0000600000mangemoilesfesses.xml";
+        byte[] buf = s.getBytes();
         InetAddress address = InetAddress.getByName(args[0]);
         DatagramPacket packet = new DatagramPacket(buf, buf.length, address, 4445);
         socket.send(packet);
