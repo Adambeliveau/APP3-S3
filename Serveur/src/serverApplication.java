@@ -1,126 +1,46 @@
 import java.io.File;
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.zip.Checksum;
 
-public class serverApplication extends Thread {
+public class serverApplication {
 
-    protected DatagramSocket socket = null;
-    private File out = null;
-    private int cpt = 1;
-    private boolean quit = false;
-    private boolean cptsent = false;
-    private DatagramPacket packet;
-    private Checksum crc = new Checksum() {
-        @Override
-        public void update(int b) {
+    private static File out = null;
+    private static List<byte[]> packetbytes = new ArrayList<byte[]>();
+    private static int offsetNoHeader = 13;
+    private static int offsetChecksum = 5;
+    private static int noOffset = 0;
+    private static int getSeqNb = offsetChecksum;
+    private static int getChecksum = offsetNoHeader;
 
-        }
-
-        @Override
-        public void update(byte[] b, int off, int len) {
-
-        }
-
-        @Override
-        public long getValue() {
-            return 0;
-        }
-
-        @Override
-        public void reset() {
-
-        }
-    };
-    private List<byte[]> packetbytes = new ArrayList<byte[]>();
-
-    public serverApplication() throws IOException {
-        this("serverApplication");
-    }
-
-    public serverApplication(String name) throws IOException {
-        super(name);
-        socket = new DatagramSocket(4445);
-    }
-
-    public void run() {
-       while(!quit){
-           try{
-               byte[] buf = new byte[256];
-
-               // receive request
-               packet = new DatagramPacket(buf, buf.length);
-               socket.receive(packet);
-               if(!cptsent) {
-                   sendCpt();
-                   cptsent = true;
-               }
-               if(false)
-                   quit = true;
-
-               if(firstPacket())
-                   openFile();
-
-               if(!firstPacket()){
-                   reconstructData();
-               }
-           }catch (IOException e){
-               e.printStackTrace();
-           }
-       }
-       socket.close();
-    }
-
-    private void reconstructData() {
+    public static int reconstructData(DatagramPacket packet, int cpt) {
         try{
-            if(!checksum())
+            if(!serverLiaisonDonnees.checksum(packet))
                 throw new IOException("mama mia");
-            getThoseBytesBackTogether();
+            return getThoseBytesBackTogether(packet, cpt);
+
         }
         catch (IOException e){
             System.err.println(e);
         }
+        return cpt;
     }
 
-    public void openFile(){
-        String data = new String(packet.getData(),10,packet.getLength());
+    public static void openFile(DatagramPacket packet){
+        String data = new String(packet.getData(),offsetNoHeader,packet.getLength());
         out = new File(data);
     }
 
-    public void sendCpt(){
-        InetAddress adress = packet.getAddress();
-        int port = packet.getPort();
-        DatagramPacket packet = new DatagramPacket(String.valueOf(cpt).getBytes(),String.valueOf(cpt).getBytes().length, adress, port);
-        try {
-            socket.send(packet);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public boolean firstPacket(){
-        String data = new String(packet.getData(),0,5);
-        return cpt != Integer.parseInt(data);
-    }
-
-    public boolean checksum(){
-        String receivedChecksum = new String(packet.getData(),5,5);
-        String data = new String(packet.getData(),10,packet.getLength());
-        return createChecksum(data.getBytes()) == Long.parseLong(receivedChecksum);
-
-    }
-    public long createChecksum(byte[] bytes){
-        crc.reset();
-        crc.update(bytes);
-        return crc.getValue();
-    }
-
-    public void getThoseBytesBackTogether(){
+    public static int getThoseBytesBackTogether(DatagramPacket packet, int cpt){
         packetbytes.add(packet.getData());
-        cpt++;
+        return ++cpt;
     }
+
+//    public long bytesToLong(byte[] bytes) {
+//        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+//        buffer.put(bytes);
+//        buffer.flip();//need flip
+//        return buffer.getLong();
+//    }
 }

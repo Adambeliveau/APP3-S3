@@ -30,34 +30,17 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
+import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 
 public class QuoteClient {
-    private static Checksum crc = new Checksum() {
-        @Override
-        public void update(int b) {
-
-        }
-
-        @Override
-        public void update(byte[] b, int off, int len) {
-
-        }
-
-        @Override
-        public long getValue() {
-            return 0;
-        }
-
-        @Override
-        public void reset() {
-
-        }
-    };
+    private static CRC32 crc = new CRC32();
 
     public static void main(String[] args) throws IOException {
 
@@ -73,14 +56,22 @@ public class QuoteClient {
         // send request
         String s = "mangemoilesfesses.xml";
         long checkSum = createChecksum(s.getBytes());
-        String CheckSum = String.valueOf(checkSum);
-        for(int i = String.valueOf(checkSum).getBytes().length; i < 5; i++){
-            CheckSum = "0" + CheckSum;
-        }
-        s = "00001" + CheckSum + s;
+        byte[] checksumArr = ByteBuffer.allocate(8).putLong(checkSum).array();
+        byte[] seqNumber = new byte[5];
+        String seqNb = "00001";
+        seqNumber = seqNb.getBytes();
         byte[] buf = s.getBytes();
+        byte[] finalpacket = new byte[checksumArr.length+seqNumber.length+buf.length];
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        out.write(seqNumber);
+        out.write(checksumArr);
+        out.write(buf);
+        finalpacket = out.toByteArray();
+
         InetAddress address = InetAddress.getByName(args[0]);
-        DatagramPacket packet = new DatagramPacket(buf, buf.length, address, 4445);
+
+        DatagramPacket packet = new DatagramPacket(finalpacket, finalpacket.length, address, 4445);
         socket.send(packet);
 
         // get response
