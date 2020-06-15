@@ -34,8 +34,31 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.util.zip.Checksum;
 
 public class QuoteClient {
+    private static Checksum crc = new Checksum() {
+        @Override
+        public void update(int b) {
+
+        }
+
+        @Override
+        public void update(byte[] b, int off, int len) {
+
+        }
+
+        @Override
+        public long getValue() {
+            return 0;
+        }
+
+        @Override
+        public void reset() {
+
+        }
+    };
+
     public static void main(String[] args) throws IOException {
 
         if (args.length != 1) {
@@ -46,8 +69,15 @@ public class QuoteClient {
         // get a datagram socket
         DatagramSocket socket = new DatagramSocket();
 
+
         // send request
-        String s = "0000600000mangemoilesfesses.xml";
+        String s = "mangemoilesfesses.xml";
+        long checkSum = createChecksum(s.getBytes());
+        String CheckSum = String.valueOf(checkSum);
+        for(int i = String.valueOf(checkSum).getBytes().length; i < 5; i++){
+            CheckSum = "0" + CheckSum;
+        }
+        s = "00001" + CheckSum + s;
         byte[] buf = s.getBytes();
         InetAddress address = InetAddress.getByName(args[0]);
         DatagramPacket packet = new DatagramPacket(buf, buf.length, address, 4445);
@@ -63,4 +93,11 @@ public class QuoteClient {
 
         socket.close();
     }
+
+    public static long createChecksum(byte[] bytes){
+        crc.reset();
+        crc.update(bytes);
+        return crc.getValue();
+    }
 }
+

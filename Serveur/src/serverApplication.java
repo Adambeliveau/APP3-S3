@@ -36,9 +36,7 @@ public class serverApplication extends Thread {
 
         }
     };
-    private List<String> packetbytes = new ArrayList<String>();
-    private int cptPacketReceived = 0;
-    private int nbPacket = 0;
+    private List<byte[]> packetbytes = new ArrayList<byte[]>();
 
     public serverApplication() throws IOException {
         this("serverApplication");
@@ -64,10 +62,10 @@ public class serverApplication extends Thread {
                if(false)
                    quit = true;
 
-               if(firstpacket())
+               if(firstPacket())
                    openFile();
 
-               if(!firstpacket()){
+               if(!firstPacket()){
                    reconstructData();
                }
            }catch (IOException e){
@@ -90,7 +88,6 @@ public class serverApplication extends Thread {
 
     public void openFile(){
         String data = new String(packet.getData(),10,packet.getLength());
-        nbPacket = Integer.parseInt(new String(packet.getData(),0,5));
         out = new File(data);
     }
 
@@ -105,7 +102,7 @@ public class serverApplication extends Thread {
         }
     }
 
-    public boolean firstpacket(){
+    public boolean firstPacket(){
         String data = new String(packet.getData(),0,5);
         return cpt != Integer.parseInt(data);
     }
@@ -123,11 +120,7 @@ public class serverApplication extends Thread {
     }
 
     public void getThoseBytesBackTogether(){
-        String data = new String(packet.getData(),10,packet.getLength());
-        if(nbPacket > ++cptPacketReceived)
-            packetbytes.add(data);
-        else
-            cptPacketReceived = 0;
-
+        packetbytes.add(packet.getData());
+        cpt++;
     }
 }
