@@ -1,32 +1,39 @@
+import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.zip.CRC32;
+
+
 
 public class serverLiaisonDonnees {
-    private static int offsetNoHeader = 13;
-    private static int offsetChecksum = 5;
-    private static int noOffset = 0;
-    private static int getSeqNb = offsetChecksum;
-    private static int getChecksum = offsetNoHeader;
-    private static CRC32 crc = new CRC32();
 
-    public static boolean firstPacket(DatagramPacket packet, int cpt){
-        String data = new String(packet.getData(),noOffset,getSeqNb);
-        return cpt != Integer.parseInt(data);
+
+    public static void sendCpt() {
+        InetAddress adress = serverThread.getPacket().getAddress();
+        int port = serverThread.getPacket().getPort();
+        DatagramPacket cptPacket = new DatagramPacket(String.valueOf(serverThread.getCpt()).getBytes(), String.valueOf(serverThread.getCpt()).getBytes().length, adress, port);
+        try {
+            serverThread.getSocket().send(cptPacket);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    public static boolean checksum(DatagramPacket packet){
-        byte[] receivedChecksum = Arrays.copyOfRange(packet.getData(), offsetChecksum,getChecksum);
-        ByteBuffer wrap = ByteBuffer.wrap(receivedChecksum);
-        String data = new String(packet.getData(),offsetNoHeader,packet.getLength()-offsetNoHeader);
-        return createChecksum(data.getBytes()) == wrap.getLong();
-
-    }
-    public static long createChecksum(byte[] bytes){
-        crc.reset();
-        crc.update(bytes);
-        return crc.getValue();
+    public static void reSend() {
+        serverApplication.putByteArrayInOrder();
+        int cpt = 0;
+        for (byte[] data : serverApplication.getFinalData()) {
+            if (data == null) {
+                int seqNbint = cpt + serverThread.getCpt();
+                byte[] seqNb = ByteBuffer.allocate(5).putInt(seqNbint).array();
+                DatagramPacket packet = new DatagramPacket(seqNb,seqNb.length,serverThread.getPacket().getAddress(),serverThread.getPacket().getPort());
+                try {
+                    serverThread.getSocket().send(packet);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            cpt++;
+        }
     }
 }

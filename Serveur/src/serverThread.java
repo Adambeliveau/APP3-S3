@@ -4,11 +4,24 @@ import java.net.DatagramSocket;
 
 public class serverThread extends Thread {
 
-    protected DatagramSocket socket = null;
-    private DatagramPacket packet;
+
+    private static DatagramSocket socket = null;
+    private static DatagramPacket packet;
     private boolean cptsent = false;
-    private int cpt = 1;
+    private static int cpt = 200;
     private boolean quit = false;
+
+    public static int getCpt() {
+        return cpt;
+    }
+
+    public static DatagramPacket getPacket() {
+        return packet;
+    }
+
+    public static DatagramSocket getSocket() {
+        return socket;
+    }
 
     public serverThread() throws IOException {
         this("serverApplication");
@@ -31,18 +44,23 @@ public class serverThread extends Thread {
                 e.printStackTrace();
             }
             if (!cptsent) {
-                serverTransport.sendCpt(packet, socket, cpt);
+                serverLiaisonDonnees.sendCpt();
                 cptsent = true;
             }
             if (false)
                 quit = true;
 
-            if (serverLiaisonDonnees.firstPacket(packet, cpt))
-                serverApplication.openFile(packet);
-
-            if (!serverLiaisonDonnees.firstPacket(packet, cpt)) {
-                cpt = serverApplication.reconstructData(packet, cpt);
+            serverTransport.reconstructData();
+            if(serverTransport.getIsLastpacket()){
+                if(!serverTransport.checkForMissingPacket()){
+                    serverLiaisonDonnees.reSend();
+                }
+                serverTransport.setNbTotalPacket(0);
+                serverTransport.setSommeVerif(0);
+                cpt += serverTransport.getNbTotalPacket();
+                serverApplication.storeFile();
             }
+
         }
 
         socket.close();

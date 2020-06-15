@@ -58,7 +58,7 @@ public class QuoteClient {
         long checkSum = createChecksum(s.getBytes());
         byte[] checksumArr = ByteBuffer.allocate(8).putLong(checkSum).array();
         byte[] seqNumber = new byte[5];
-        String seqNb = "00001";
+        String seqNb = "00201";
         seqNumber = seqNb.getBytes();
         byte[] buf = s.getBytes();
         byte[] finalpacket = new byte[checksumArr.length+seqNumber.length+buf.length];
