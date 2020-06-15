@@ -31,15 +31,13 @@ public class serverThread extends Thread {
 
     public serverThread(String name) throws IOException {
         super(name);
-        socket = new DatagramSocket(4445);
-        byte[] buf = new byte[256];
-        packet = new DatagramPacket(buf, buf.length, InetAddress.getLocalHost(),4445);
+        socket = new DatagramSocket(32367);
     }
 
     public void run() {
        while(!quit){
            byte[] buf = new byte[256];
-           DatagramPacket packet = new DatagramPacket(buf, buf.length);
+                packet = new DatagramPacket(buf, buf.length);
            try {
                if(!serverLiaisonDonnees.lastPacketArrived()){
                    socket.setSoTimeout(500);
@@ -51,6 +49,7 @@ public class serverThread extends Thread {
                if ((!cptsent))
                {
                    serverLiaisonDonnees.sendCpt();
+                   cptsent = true;
                }
                serverLiaisonDonnees.setPacket(packet);
            } catch (SocketTimeoutException e) {

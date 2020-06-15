@@ -101,7 +101,7 @@ public class QuoteClient {
         DatagramPacket packet = new DatagramPacket(buf, buf.length, address, 4445);
 
         for (byte[] finalpacket : done) {
-            packet = new DatagramPacket(finalpacket, finalpacket.length, address, 4445);
+            packet = new DatagramPacket(finalpacket, finalpacket.length, address, 32367);
             socket.send(packet);
         }
 

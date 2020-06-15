@@ -22,6 +22,7 @@ public class serverApplication {
                 byte[] data = Arrays.copyOfRange(dataAndHeader,28,dataAndHeader.length-28);
                 Fout.write(data);
             }
+            Fout.close();
 
         } catch (IOException e) {
             e.printStackTrace();
