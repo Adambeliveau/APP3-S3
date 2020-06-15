@@ -2,6 +2,7 @@ package PackageClient;
 
 import PackageClient.Liaison;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,28 +12,26 @@ public class Transport {
     private byte[] packetInBytes;  //packet de 200 bytes
     private List<byte[]> myPackets = new ArrayList<>(); //liste de tous les packets
     private List<byte[]> myPacketsWithHeaders = new ArrayList<>();//liste de tous les packets de 200 + header
+
+
     private String fileName;
-
-
-    private int cptPacket;
-    private int firstPacket;
-    private int lastPacket;
+    private static int cptPacket = 0; //nbre de packets total envoyés
+    private int firstPacket;    //premier packet de la sequence
+    private int lastPacket;     //dernier packet de la sequence
     private final int tailleMax = 200;
-    private int tailleTotale;
+    private int tailleTotale;   //nbre de byte total du fichier
 
     public Transport(String[] args, byte[] textBytes) {
         this.args = args;
         fileInBytes = textBytes;
         tailleTotale = fileInBytes.length;
-        cptPacket = 0;
-        firstPacket = 0;
-        lastPacket = 0;
+        firstPacket = cptPacket;
+        lastPacket = firstPacket;
     }
 
     public void run() {
         //prend le nom du fichier a partir du path
         fileName = args[1].substring(args[1].lastIndexOf("/") + 1);
-        System.out.println("yololololo " + fileName);
         splitBytes();
         createHeader();
     }
@@ -54,13 +53,13 @@ public class Transport {
                 } else {
                     cptByte = 0;
                     myPackets.add(packetInBytes);
-                    cptPacket++;
+                    lastPacket++;
                     packetInBytes = new byte[tailleMax];
                 }
             }
             //ca sort de la boucle si le file est fini mais ca a pas save pcq byte<200
             myPackets.add(packetInBytes);
-            cptPacket++;
+            lastPacket++;
         }
         int i = 0;
         for (byte[] b : myPackets) {
@@ -71,28 +70,49 @@ public class Transport {
 
     //fok jme souviens pu ce quon avait dit quon allait mettre
     private void createHeader() {
-        int cpt = 1;
-        // modele header = num paquet - taille fichier complet-nbre packets-nom fichier-...???
-        String firstHeader = cpt + "-" + tailleTotale + "-" + cptPacket + "-" + fileName + "-";
-        myPacketsWithHeaders.add(firstHeader.getBytes());
-        cptPacket++; //on ajoute un packet qui n'etait pas la avant
 
+        int cpt = firstPacket;
         String header;
-        byte[] lol = firstHeader.getBytes();
+        lastPacket++; //on ajoute un packet qui n'etait pas la avant (header + nomFichier)
+
+        String firstPacketString = numInString(firstPacket);
+        String lastPacketString = numInString(lastPacket);
+        String tailleTotaleString = numInString(tailleTotale);
+        String seqNumString;
+
+        seqNumString = numInString(cpt);
+
+        // modele header = numSeq + taille + seqDebut + seqFin
+        String firstHeader = seqNumString + tailleTotaleString + firstPacketString + lastPacketString + fileName;
+
+        myPacketsWithHeaders.add(firstHeader.getBytes());
+        // System.out.println("yolo" + cpt + " " + firstHeader);
+
         for (byte[] b : myPackets) {
             cpt++;
-            header = cpt + "-" + tailleTotale + "-" + cptPacket + "-" + fileName + "-";
+            seqNumString = numInString(cpt);
+            header = seqNumString + tailleTotaleString + firstPacketString + lastPacketString;
             String textWithHeader = header + new String(b);
             myPacketsWithHeaders.add(textWithHeader.getBytes());
-
-
-        }
-        int i = 1;
-        for (byte[] bb : myPacketsWithHeaders) {
-            System.out.println("Caca" + i + " " + new String(bb));
-            i++;
+            // System.out.println("yolo" + cpt + " " + header);
         }
     }
 
-
+    public String numInString(int num) {
+        String myString;
+        String myStringDebut;
+        if (num < 10) {
+            myStringDebut = "0000";
+        } else if (num < 100) {
+            myStringDebut = "000";
+        } else if (num < 1000) {
+            myStringDebut = "00";
+        } else if (num < 10000) {
+            myStringDebut = "0";
+        } else {
+            myStringDebut = "";
+        }
+        myString = myStringDebut + num;
+        return myString;
+    }
 }
