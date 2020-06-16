@@ -41,7 +41,7 @@ public class serverThread extends Thread {
 
     public void run() {
        while(!quit){
-           byte[] buf = new byte[256];
+           byte[] buf = new byte[230];
                 packet = new DatagramPacket(buf, buf.length);
            try {
                if(!serverLiaisonDonnees.lastPacketArrived()){
@@ -53,6 +53,10 @@ public class serverThread extends Thread {
                socket.receive(packet);
                serverLiaisonDonnees.setPacket(packet);
                serverLiaisonDonnees.sendConfirmation();
+
+               if(serverLiaisonDonnees.getTError()){
+                   quit = true;
+               }
            } catch (SocketTimeoutException e) {
                System.err.println("Socket timeout");
                serverLiaisonDonnees.reSend(serverLiaisonDonnees.getLastSeq());

@@ -41,7 +41,6 @@ public class Application {
             }
             myReader.close();
         } catch (FileNotFoundException e) {
-            System.out.println("Yolo ton fichier yest pas la");
             e.printStackTrace();
         }
         return fileString;

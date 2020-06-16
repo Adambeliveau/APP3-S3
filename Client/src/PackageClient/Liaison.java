@@ -29,16 +29,14 @@ public class Liaison {
 
     }
 
+    
     public void run() throws IOException {
         String crcString;
         String content;
         Boolean confirmation = true;
         for (byte[] b : packetsList) {
             checkSum = createChecksum(b);
-            //System.out.println(checkSum);
-            //content = new String(b);
             byte[] checksumArr = ByteBuffer.allocate(8).putLong(checkSum).array();
-            //System.out.println(new String(checksumArr));
             addCRC(b, checksumArr);
 
         }
@@ -46,7 +44,7 @@ public class Liaison {
 
         for (byte[] b : packetsListCRC) {
 
-            if (args.length > 2 && cpt != 1) {
+            if (args[2].equals("corrupt") && cpt > 1) {
                 corruption(b);
             }
 
@@ -64,14 +62,22 @@ public class Liaison {
         byte[] packetCRC = new byte[taille];
         int pos = 0;
 
-        for (byte b : checkSumArr) {
-            packetCRC[pos] = b;
-            pos++;
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            out.write(checkSumArr);
+            out.write(packetNoCRC);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        for (byte b : packetNoCRC) {
-            packetCRC[pos] = b;
-            pos++;
-        }
+        packetCRC = out.toByteArray();
+//        for (byte b : checkSumArr) {
+//            packetCRC[pos] = b;
+//            pos++;
+//        }
+//        for (byte b : packetNoCRC) {
+//            packetCRC[pos] = b;
+//            pos++;
+//        }
         packetsListCRC.add(packetCRC);
 
     }
@@ -82,15 +88,14 @@ public class Liaison {
         socket = new DatagramSocket();
         DatagramPacket packet = new DatagramPacket(packetCRC, packetCRC.length, address, 32367);
         String test = new String(packet.getData());
-        System.out.println(test);
         socket.send(packet);
 
         //receive confirmation
         byte[] buf = new byte[5];
         DatagramPacket confirmation = new DatagramPacket(buf, buf.length);
         socket.receive(confirmation);
-        System.out.println(new String(confirmation.getData()));
-        int confirmationI = Integer.parseInt(new String(confirmation.getData()));
+        ByteBuffer wrap = ByteBuffer.wrap(confirmation.getData());
+        int confirmationI = wrap.getInt();
         if (cpt == confirmationI) {
             confi = true;
         } else {

@@ -11,7 +11,7 @@ public class serverApplication {
 
     private static File out = null;
     public static void openFile(byte[] dataWithHeader){
-        String data = new String(dataWithHeader,28,serverThread.getPacket().getLength()-28);
+        String data = new String(dataWithHeader,30,serverThread.getPacket().getLength()-30);
         out = new File(data);
     }
 
@@ -19,7 +19,7 @@ public class serverApplication {
         try {
             FileOutputStream Fout = new FileOutputStream(out);
             for (byte[] dataAndHeader: serverTransport.getPacketArray()){
-                byte[] data = Arrays.copyOfRange(dataAndHeader,28,dataAndHeader.length-28);
+                byte[] data = Arrays.copyOfRange(dataAndHeader,30,dataAndHeader.length);
                 Fout.write(data);
             }
             Fout.close();

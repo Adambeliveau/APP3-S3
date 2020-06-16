@@ -1,3 +1,4 @@
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.nio.ByteBuffer;
@@ -15,23 +16,33 @@ public class serverTransport {
     private int lastSeqInt = 0;
     private boolean IsLastPacket = true;
     private static  int nbErreur = 0;
+    private static  boolean TError = false;
 
 
     public static boolean checksum(DatagramPacket packet){
         byte[] receivedChecksum = Arrays.copyOfRange(packet.getData(), 0,8);
         ByteBuffer wrap = ByteBuffer.wrap(receivedChecksum);
-        String data = new String(packet.getData(),8,packet.getLength()-8);
-        return createChecksum(data.getBytes()) == wrap.getLong();
+        ByteBuffer wrap1 = ByteBuffer.wrap(receivedChecksum);
+        System.out.println(wrap1.getLong());
+        System.out.println(packet.getLength()-8);
+        byte[] data = Arrays.copyOfRange(packet.getData(),8,packet.getLength());
+        return createChecksum(data) == wrap.getLong();
 
     }
     public static long createChecksum(byte[] bytes){
         crc.reset();
         crc.update(bytes);
+        System.out.println(new String(bytes));
+        System.out.println(crc.getValue());
         return crc.getValue();
     }
 
     public static List<byte[]> getPacketArray() {
         return packetArray;
+    }
+
+    public static boolean getTError() {
+        return TError;
     }
 
     public boolean checkForMissingPacket(){
@@ -46,8 +57,10 @@ public class serverTransport {
 
     public void findMissingPacket(){
         for(int i = 0;i<packetArray.size();i++){
-            int nextPlace = Integer.parseInt(new String(Arrays.copyOfRange(packetArray.get(i+1), 8, 13)));
-            int currentPlace = Integer.parseInt(new String(Arrays.copyOfRange(packetArray.get(i+1), 8, 13)));
+            ByteBuffer wrapnext = ByteBuffer.wrap(Arrays.copyOfRange(packetArray.get(i+1), 8, 13));
+            ByteBuffer wrapcurrent = ByteBuffer.wrap(Arrays.copyOfRange(packetArray.get(i+1), 8, 13));
+            int nextPlace = wrapnext.getInt();
+            int currentPlace = wrapcurrent.getInt();
             int retreiver = 1;
             while(currentPlace + retreiver != nextPlace){
                 serverLiaisonDonnees.reSend(currentPlace+retreiver);
@@ -62,27 +75,33 @@ public class serverTransport {
         nbTotalPacket++;
         try{
             if(!checksum(packet)){
-                throw new IOException("Invalid Checksum");
+                System.out.println(new String(packet.getData()));
+                throw new IOException("Invalid Checksum Corrupted File");
             }
         }
         catch (IOException e){
             try{
                 if(++nbErreur>2){
+                    TError = true;
                     throw new IOException("Transmission Error exception");
                 }
             }catch (IOException ioe){
                 System.err.println(ioe);
             }
             byte[] seq = Arrays.copyOfRange(packet.getData(),8,13);
-            serverLiaisonDonnees.reSend(Integer.parseInt(new String(seq)));
+            ByteBuffer wrap = ByteBuffer.wrap(seq);
+            serverLiaisonDonnees.reSend(wrap.getInt());
             System.err.println(e);
         }
-        byte[] firstSeq = Arrays.copyOfRange(packet.getData(), 18, 23);
-        firstSeqInt = Integer.parseInt(new String(firstSeq));
-        byte[] lastSeq = Arrays.copyOfRange(packet.getData(), 23, 28);
-        lastSeqInt = Integer.parseInt(new String(lastSeq));
+        byte[] firstSeq = Arrays.copyOfRange(packet.getData(), 20, 25);
+        ByteBuffer wrap1 = ByteBuffer.wrap(firstSeq);
+        firstSeqInt = wrap1.getInt();
+        byte[] lastSeq = Arrays.copyOfRange(packet.getData(), 25, 30);
+        ByteBuffer wrap2 = ByteBuffer.wrap(lastSeq);
+        lastSeqInt = wrap2.getInt();
         byte[] currentSeq = Arrays.copyOfRange(packet.getData(), 8, 13);
-        int currentSeqInt = Integer.parseInt(new String(currentSeq));
+        ByteBuffer wrap3 = ByteBuffer.wrap(currentSeq);
+        int currentSeqInt = wrap3.getInt();
 
         if(currentSeqInt == firstSeqInt){
             IsLastPacket = false;
@@ -98,6 +117,7 @@ public class serverTransport {
             catch (IOException e){
                 try{
                     if(++nbErreur>2){
+                        TError = true;
                         throw new IOException("Transmission Error exception");
                     }
                 }catch (IOException ioe){

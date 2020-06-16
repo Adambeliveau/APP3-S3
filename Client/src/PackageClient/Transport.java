@@ -2,9 +2,11 @@ package PackageClient;
 
 import PackageClient.Liaison;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Transport {
@@ -26,8 +28,8 @@ public class Transport {
         this.args = args;
         fileInBytes = textBytes;
         tailleTotale = fileInBytes.length;
-        lastPacket = cptPacket;
-        firstPacket = lastPacket+1;
+        lastPacket = cptPacket+1;
+        firstPacket = lastPacket;
 
     }
 
@@ -48,27 +50,25 @@ public class Transport {
             packetInBytes = fileInBytes;
         } else {*/
             packetInBytes = new byte[tailleMax];
-
-            while (posFile < fileInBytes.length) {
-                if (cptByte < tailleMax) {
-                    packetInBytes[cptByte] = fileInBytes[posFile];
-                    posFile++;
-                    cptByte++;
-                } else {
-                    cptByte = 0;
-                    myPackets.add(packetInBytes);
-                    lastPacket++;
-                    packetInBytes = new byte[tailleMax];
+            boolean lastOne = false;
+            while (!lastOne) {
+                packetInBytes = Arrays.copyOfRange(fileInBytes,posFile,posFile+200);
+                posFile += 200;
+                lastPacket++;
+                myPackets.add(packetInBytes);
+                if (posFile > fileInBytes.length-200){
+                    lastOne = true;
                 }
             }
             //ca sort de la boucle si le file est fini mais ca a pas save pcq byte<200
+            packetInBytes = Arrays.copyOfRange(fileInBytes,posFile,fileInBytes.length);
             myPackets.add(packetInBytes);
             lastPacket++;
         //}
         int i = 0;
         for (byte[] b : myPackets) {
             i++;
-            //System.out.println("num packet " + i + " " + new String(b));
+
         }
     }
 
@@ -76,46 +76,62 @@ public class Transport {
     private void createHeader() {
 
         int cpt = firstPacket;
-        String header;
-        lastPacket++; //on ajoute un packet qui n'etait pas la avant (header + nomFichier)
 
-        String firstPacketString = numInString(firstPacket);
-        String lastPacketString = numInString(lastPacket);
-        String tailleTotaleString = numInString(tailleTotale);
-        String seqNumString;
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte [] firstPacketByte;
+        byte [] lastPacketByte;
+        byte [] tailleTotaleByte;
+        byte [] seqNumByte;
 
-        seqNumString = numInString(cpt);
+        firstPacketByte = ByteBuffer.allocate(5).putInt(firstPacket).array();
+        lastPacketByte = ByteBuffer.allocate(5).putInt(lastPacket).array();
+        tailleTotaleByte = ByteBuffer.allocate(7).putInt(tailleTotale).array();
+        seqNumByte = ByteBuffer.allocate(5).putInt(cpt++).array();
 
-        // modele header = numSeq + taille + seqDebut + seqFin
-        String firstHeader = seqNumString + tailleTotaleString + firstPacketString + lastPacketString + fileName;
-
-        myPacketsWithHeaders.add(firstHeader.getBytes());
+        try {
+            out.write(seqNumByte);
+            out.write(tailleTotaleByte);
+            out.write(firstPacketByte);
+            out.write(lastPacketByte);
+            out.write(fileName.getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        byte [] firstHeader = out.toByteArray();
+        myPacketsWithHeaders.add(firstHeader);
+        try {
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         for (byte[] b : myPackets) {
-            cpt++;
-            seqNumString = numInString(cpt);
-            header = seqNumString + tailleTotaleString + firstPacketString + lastPacketString;
-            String textWithHeader = header + new String(b);
-            myPacketsWithHeaders.add(textWithHeader.getBytes());
-            //System.out.println("yolo" + cpt + " " + header);
-        }
-    }
+            out = new ByteArrayOutputStream();
+            lastPacket++; //on ajoute un packet qui n'etait pas la avant (header + nomFichier)
+            seqNumByte = ByteBuffer.allocate(5).putInt(cpt++).array();
+            try {
+                out.write(seqNumByte);
+                out.write(tailleTotaleByte);
+                out.write(firstPacketByte);
+                out.write(lastPacketByte);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            byte [] header = out.toByteArray();
 
-    public String numInString(int num) {
-        String myString;
-        String myStringDebut;
-        if (num < 10) {
-            myStringDebut = "0000";
-        } else if (num < 100) {
-            myStringDebut = "000";
-        } else if (num < 1000) {
-            myStringDebut = "00";
-        } else if (num < 10000) {
-            myStringDebut = "0";
-        } else {
-            myStringDebut = "";
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            try {
+                outputStream.write(header);
+                outputStream.write(b);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            myPacketsWithHeaders.add(outputStream.toByteArray());
+            try {
+                out.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-        myString = myStringDebut + num;
-        return myString;
     }
 }

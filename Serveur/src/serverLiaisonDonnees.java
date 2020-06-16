@@ -40,7 +40,7 @@ public class serverLiaisonDonnees {
     }
 
     public static void reSend(int seq) {
-       byte[] seqNb = String.valueOf(seq).getBytes();
+       byte[] seqNb = ByteBuffer.allocate(5).putInt(seq).array();
         try {
             serverThread.getSocket().send(new DatagramPacket(seqNb, seqNb.length,
                    packet.getAddress(),packet.getPort()));
@@ -82,7 +82,7 @@ public class serverLiaisonDonnees {
                 }
             }
             else{
-                data = new String(packet.getData(), 28, packet.getLength() - 28);
+                data = new String(packet.getData(), 30, packet.getLength() - 30);
             }
             String finalLog = String.format("%s\t\t%s\t\t\t%s\n", new Timestamp(System.currentTimeMillis()),desc,data);
             file.write(finalLog);
@@ -103,5 +103,9 @@ public class serverLiaisonDonnees {
 
     public static int getLastSeq() {
         return st.getLastSeq();
+    }
+
+    public static boolean getTError() {
+        return serverTransport.getTError();
     }
 }
