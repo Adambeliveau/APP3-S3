@@ -4,6 +4,7 @@ package PackageClient;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Scanner;
 
 public class Application {
@@ -17,7 +18,7 @@ public class Application {
         filePath = args[1];
     }
 
-    public void run() {
+    public void run() throws IOException {
         fileText = readFile();
 
         fileByteContent = fileText.getBytes();

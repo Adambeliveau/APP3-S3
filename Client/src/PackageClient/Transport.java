@@ -96,7 +96,7 @@ public class Transport {
             header = seqNumString + tailleTotaleString + firstPacketString + lastPacketString;
             String textWithHeader = header + new String(b);
             myPacketsWithHeaders.add(textWithHeader.getBytes());
-            // System.out.println("yolo" + cpt + " " + header);
+            //System.out.println("yolo" + cpt + " " + header);
         }
     }
 

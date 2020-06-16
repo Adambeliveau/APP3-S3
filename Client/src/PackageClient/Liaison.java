@@ -36,6 +36,9 @@ public class Liaison {
             content = new String(b);
             byte[] checksumArr = ByteBuffer.allocate(8).putLong(checkSum).array();
             addCRC(b, checksumArr);
+
+        }
+        for(byte[] b: packetsListCRC){
             sendPackets(b);
         }
     }
@@ -61,6 +64,7 @@ public class Liaison {
         socket = new DatagramSocket();
         DatagramPacket packet = new DatagramPacket(packetCRC, packetCRC.length, address, 32367);
         socket.send(packet);
+
     }
 
     public static long createChecksum(byte[] bytes) {
