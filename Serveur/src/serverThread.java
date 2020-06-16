@@ -1,4 +1,6 @@
 import javax.xml.crypto.Data;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.*;
 import java.util.concurrent.TimeoutException;
@@ -32,6 +34,9 @@ public class serverThread extends Thread {
     public serverThread(String name) throws IOException {
         super(name);
         socket = new DatagramSocket(32367);
+        serverLiaisonDonnees.getFile().write("------------------------------------------------------------------------------------------------------------\n");
+        serverLiaisonDonnees.getFile().write("TimeStamp\t\t\t\t\tEvent Description\t\tData\n");
+        serverLiaisonDonnees.getFile().close();
     }
 
     public void run() {
@@ -59,6 +64,12 @@ public class serverThread extends Thread {
                e.printStackTrace();
            }
        }
+       socket.close();
+        try {
+            serverLiaisonDonnees.getFile().close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 

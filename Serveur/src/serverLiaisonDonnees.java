@@ -10,6 +10,22 @@ public class serverLiaisonDonnees {
 
     private static DatagramPacket packet;
     private static serverTransport st = new serverTransport();
+    private static File log = new File("Event.log");
+    private static FileWriter file;
+    static {
+        try {
+            file = new FileWriter(log,true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public static FileWriter getFile() {
+        return file;
+    }
+
+    public static File getLog() {
+        return log;
+    }
 
     public static void sendCpt() {
         InetAddress adress = serverThread.getPacket().getAddress();
@@ -17,7 +33,7 @@ public class serverLiaisonDonnees {
         DatagramPacket cptPacket = new DatagramPacket(String.valueOf(serverThread.getCpt()).getBytes(), String.valueOf(serverThread.getCpt()).getBytes().length, adress, port);
         try {
             serverThread.getSocket().send(cptPacket);
-            putInlog("send Cpt");
+            putInlog("send Cpt\t");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -28,6 +44,7 @@ public class serverLiaisonDonnees {
         try {
             serverThread.getSocket().send(new DatagramPacket(seqNb, seqNb.length,
                     serverThread.getPacket().getAddress(),serverThread.getPacket().getPort()));
+            putInlog("resend Packet");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -38,6 +55,7 @@ public class serverLiaisonDonnees {
         try {
             serverThread.getSocket().send(new DatagramPacket(seqNb, seqNb.length,
                     serverThread.getPacket().getAddress(),serverThread.getPacket().getPort()));
+            putInlog("send Confirmation");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -45,16 +63,16 @@ public class serverLiaisonDonnees {
 
     public static void setPacket(DatagramPacket p) {
         packet = p;
+        putInlog("Packet received");
         st.verifyPacket();
     }
 
     public static void putInlog(String desc){
-        File log = new File("Event.log");
         try {
-            FileWriter file = new FileWriter(log);
+            file = new FileWriter(log,true);
             String data;
-            if(desc.equals("send Cpt") || desc.equals("send Confirmation") || desc.equals("resend Packet")){
-                if(desc.equals("send Cpt")){
+            if(desc.equals("send Cpt\t") || desc.equals("send Confirmation") || desc.equals("resend Packet")){
+                if(desc.equals("send Cpt\t")){
                     data = String.valueOf(serverThread.getCpt());
                 }
                 else{
@@ -65,7 +83,7 @@ public class serverLiaisonDonnees {
             else{
                 data = new String(packet.getData(), 28, packet.getLength() - 28);
             }
-            String finalLog = String.format("%s\t\t%s\t%s", new Timestamp(System.currentTimeMillis()),desc,data);
+            String finalLog = String.format("%s\t\t%s\t\t\t%s\n", new Timestamp(System.currentTimeMillis()),desc,data);
             file.write(finalLog);
             file.close();
 
