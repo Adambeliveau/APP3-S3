@@ -1,7 +1,8 @@
-import java.io.IOException;
+import java.io.*;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
+import java.sql.Timestamp;
 import java.util.Arrays;
 
 
@@ -16,6 +17,7 @@ public class serverLiaisonDonnees {
         DatagramPacket cptPacket = new DatagramPacket(String.valueOf(serverThread.getCpt()).getBytes(), String.valueOf(serverThread.getCpt()).getBytes().length, adress, port);
         try {
             serverThread.getSocket().send(cptPacket);
+            putInlog("send Cpt");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -46,6 +48,31 @@ public class serverLiaisonDonnees {
         st.verifyPacket();
     }
 
+    public static void putInlog(String desc){
+        File log = new File("Event.log");
+        try {
+            FileWriter file = new FileWriter(log);
+            String data;
+            if(desc.equals("send Cpt") || desc.equals("send Confirmation") || desc.equals("resend Packet")){
+                if(desc.equals("send Cpt")){
+                    data = String.valueOf(serverThread.getCpt());
+                }
+                else{
+                    byte[] seqNb = Arrays.copyOfRange(serverThread.getPacket().getData(),0,5);
+                    data = new String(seqNb);
+                }
+            }
+            else{
+                data = new String(packet.getData(), 28, packet.getLength() - 28);
+            }
+            String finalLog = String.format("%s\t\t%s\t%s", new Timestamp(System.currentTimeMillis()),desc,data);
+            file.write(finalLog);
+            file.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     public static DatagramPacket getPacket(){
         return packet;
     }

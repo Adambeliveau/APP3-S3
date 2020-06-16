@@ -14,6 +14,7 @@ public class serverTransport {
     private int firstSeqInt = 0;
     private int lastSeqInt = 0;
     private boolean IsLastPacket = true;
+    private static  int nbErreur = 0;
 
 
     public static boolean checksum(DatagramPacket packet){
@@ -61,10 +62,19 @@ public class serverTransport {
         nbTotalPacket++;
         try{
             if(!checksum(packet)){
-                throw new IOException("mamamiam (ce que jonathan dirait)");
+                throw new IOException("Invalid Checksum");
             }
         }
         catch (IOException e){
+            try{
+                if(++nbErreur>2){
+                    throw new IOException("Transmission Error exception");
+                }
+            }catch (IOException ioe){
+                System.err.println(ioe);
+            }
+            byte[] seq = Arrays.copyOfRange(packet.getData(),8,13);
+            serverLiaisonDonnees.reSend(Integer.parseInt(new String(seq)));
             System.err.println(e);
         }
         byte[] firstSeq = Arrays.copyOfRange(packet.getData(), 18, 23);
@@ -82,10 +92,17 @@ public class serverTransport {
             //tell the thread it's finished
             try{
                 if(!checkForMissingPacket()){
-                    throw new IOException("mamamiam X2");
+                    throw new IOException("Missing packet");
                 }
             }
             catch (IOException e){
+                try{
+                    if(++nbErreur>2){
+                        throw new IOException("Transmission Error exception");
+                    }
+                }catch (IOException ioe){
+                    System.err.println(ioe);
+                }
                 System.err.println(e);
             }
             IsLastPacket = true;

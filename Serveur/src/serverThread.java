@@ -53,7 +53,7 @@ public class serverThread extends Thread {
                }
                serverLiaisonDonnees.setPacket(packet);
            } catch (SocketTimeoutException e) {
-               System.err.println("ayayaye too late");
+               System.err.println("Socket timeout");
                serverLiaisonDonnees.reSend(serverLiaisonDonnees.getLastSeq());
            } catch (IOException e){
                e.printStackTrace();
