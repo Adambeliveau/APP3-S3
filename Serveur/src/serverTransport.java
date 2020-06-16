@@ -20,7 +20,7 @@ public class serverTransport {
     public static boolean checksum(DatagramPacket packet){
         byte[] receivedChecksum = Arrays.copyOfRange(packet.getData(), 0,8);
         ByteBuffer wrap = ByteBuffer.wrap(receivedChecksum);
-        String data = new String(packet.getData(),28,packet.getLength()-28);
+        String data = new String(packet.getData(),8,packet.getLength()-8);
         return createChecksum(data.getBytes()) == wrap.getLong();
 
     }
@@ -112,7 +112,6 @@ public class serverTransport {
         }
         else{
             packetArray.add(packet.getData());
-            serverLiaisonDonnees.sendConfirmation();
         }
 
     }

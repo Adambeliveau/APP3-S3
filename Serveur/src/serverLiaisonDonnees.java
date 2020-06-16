@@ -43,7 +43,7 @@ public class serverLiaisonDonnees {
        byte[] seqNb = String.valueOf(seq).getBytes();
         try {
             serverThread.getSocket().send(new DatagramPacket(seqNb, seqNb.length,
-                    serverThread.getPacket().getAddress(),serverThread.getPacket().getPort()));
+                   packet.getAddress(),packet.getPort()));
             putInlog("resend Packet");
         } catch (IOException e) {
             e.printStackTrace();
@@ -51,10 +51,11 @@ public class serverLiaisonDonnees {
     }
 
     public static void sendConfirmation() {
-        byte[] seqNb = Arrays.copyOfRange(serverThread.getPacket().getData(),0,5);
+        byte[] seqNb = Arrays.copyOfRange(serverThread.getPacket().getData(),8,13);
+        System.out.println(new String(seqNb));
         try {
             serverThread.getSocket().send(new DatagramPacket(seqNb, seqNb.length,
-                    serverThread.getPacket().getAddress(),serverThread.getPacket().getPort()));
+                    packet.getAddress(),packet.getPort()));
             putInlog("send Confirmation");
         } catch (IOException e) {
             e.printStackTrace();
@@ -76,7 +77,7 @@ public class serverLiaisonDonnees {
                     data = String.valueOf(serverThread.getCpt());
                 }
                 else{
-                    byte[] seqNb = Arrays.copyOfRange(serverThread.getPacket().getData(),0,5);
+                    byte[] seqNb = Arrays.copyOfRange(serverThread.getPacket().getData(),8,13);
                     data = new String(seqNb);
                 }
             }

@@ -27,6 +27,7 @@ public class serverApplication {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        serverTransport.getPacketArray().clear();
 
     }
 

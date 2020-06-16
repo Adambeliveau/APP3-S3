@@ -3,6 +3,7 @@ package PackageClient;
 //import PackageClient.Transport;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Scanner;
@@ -18,20 +19,14 @@ public class Application {
         filePath = args[1];
     }
 
-    public void run() {
-        fileText = readFile();
+    public void run() throws IOException {
+//        fileText = readFile();
 
-        fileByteContent = fileText.getBytes();
+        readFileByte();
 
         Transport transport = new Transport(args, fileByteContent);
-        try {
-            transport.run();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        transport.run();
 
-        // System.out.println("BYTE TXT: "+ (new String(fileByteContent)));
-        // System.out.println("TEXTE: "+ fileText);
     }
 
     private String readFile() {
@@ -50,5 +45,20 @@ public class Application {
             e.printStackTrace();
         }
         return fileString;
+    }
+
+    public void readFileByte(){
+        File file = new File(filePath);
+        FileInputStream in = null;
+        try {
+            in = new FileInputStream(file);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        try {
+            fileByteContent = in.readAllBytes();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

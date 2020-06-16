@@ -26,17 +26,36 @@ public class Liaison {
 
         nbPacket = packetsList.size();
 
+
     }
 
     public void run() throws IOException {
         String crcString;
         String content;
+        Boolean confirmation = true;
         for (byte[] b : packetsList) {
             checkSum = createChecksum(b);
-            content = new String(b);
+            //System.out.println(checkSum);
+            //content = new String(b);
             byte[] checksumArr = ByteBuffer.allocate(8).putLong(checkSum).array();
+            //System.out.println(new String(checksumArr));
             addCRC(b, checksumArr);
-            sendPackets(b);
+
+        }
+        int cpt = 1;
+
+        for (byte[] b : packetsListCRC) {
+
+            if (args.length > 2 && cpt != 1) {
+                corruption(b);
+            }
+
+            confirmation = sendPackets(b, cpt);
+
+            while (!confirmation) {
+                confirmation = sendPackets(b, cpt);
+            }
+            cpt++;
         }
     }
 
@@ -57,16 +76,38 @@ public class Liaison {
 
     }
 
-    private void sendPackets(byte[] packetCRC) throws IOException {
+    private Boolean sendPackets(byte[] packetCRC, int cpt) throws IOException {
+        Boolean confi = true;
+        //send packets
         socket = new DatagramSocket();
         DatagramPacket packet = new DatagramPacket(packetCRC, packetCRC.length, address, 32367);
+        String test = new String(packet.getData());
+        System.out.println(test);
         socket.send(packet);
+
+        //receive confirmation
+        byte[] buf = new byte[5];
+        DatagramPacket confirmation = new DatagramPacket(buf, buf.length);
+        socket.receive(confirmation);
+        System.out.println(new String(confirmation.getData()));
+        int confirmationI = Integer.parseInt(new String(confirmation.getData()));
+        if (cpt == confirmationI) {
+            confi = true;
+        } else {
+            confi = false;
+        }
+        return confi;
     }
 
-    public static long createChecksum(byte[] bytes) {
+    private static long createChecksum(byte[] bytes) {
         crc.reset();
         crc.update(bytes);
         return crc.getValue();
+    }
+
+    private void corruption(byte[] b) {
+        //met une virgule a la fin
+        b[b.length - 1] = 44;
     }
 
 }

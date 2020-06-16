@@ -51,18 +51,15 @@ public class serverThread extends Thread {
                    socket.setSoTimeout(1000000000);
                }
                socket.receive(packet);
-               if ((!cptsent))
-               {
-                   serverLiaisonDonnees.sendCpt();
-                   cptsent = true;
-               }
                serverLiaisonDonnees.setPacket(packet);
+               serverLiaisonDonnees.sendConfirmation();
            } catch (SocketTimeoutException e) {
                System.err.println("Socket timeout");
                serverLiaisonDonnees.reSend(serverLiaisonDonnees.getLastSeq());
            } catch (IOException e){
                e.printStackTrace();
            }
+
        }
        socket.close();
         try {

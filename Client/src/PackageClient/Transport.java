@@ -10,7 +10,7 @@ import java.util.List;
 public class Transport {
     private String[] args; //arguments de l'execution
     private byte[] fileInBytes; //fichier au complet en byte
-    private byte[] packetInBytes;  //packet de 200 bytes
+    private byte[] packetInBytes = new byte[200];  //packet de 200 bytes
     private List<byte[]> myPackets = new ArrayList<>(); //liste de tous les packets
     private List<byte[]> myPacketsWithHeaders = new ArrayList<>();//liste de tous les packets de 200 + header
 
@@ -26,8 +26,9 @@ public class Transport {
         this.args = args;
         fileInBytes = textBytes;
         tailleTotale = fileInBytes.length;
-        firstPacket = cptPacket;
-        lastPacket = firstPacket;
+        lastPacket = cptPacket;
+        firstPacket = lastPacket+1;
+
     }
 
     public void run() throws IOException {
@@ -43,9 +44,9 @@ public class Transport {
         int posFile = 0;
         int cptByte = 0;
 
-        if (fileInBytes.length < tailleMax) {
+        /*if (fileInBytes.length < tailleMax) {
             packetInBytes = fileInBytes;
-        } else {
+        } else {*/
             packetInBytes = new byte[tailleMax];
 
             while (posFile < fileInBytes.length) {
@@ -63,7 +64,7 @@ public class Transport {
             //ca sort de la boucle si le file est fini mais ca a pas save pcq byte<200
             myPackets.add(packetInBytes);
             lastPacket++;
-        }
+        //}
         int i = 0;
         for (byte[] b : myPackets) {
             i++;
@@ -96,7 +97,7 @@ public class Transport {
             header = seqNumString + tailleTotaleString + firstPacketString + lastPacketString;
             String textWithHeader = header + new String(b);
             myPacketsWithHeaders.add(textWithHeader.getBytes());
-            // System.out.println("yolo" + cpt + " " + header);
+            //System.out.println("yolo" + cpt + " " + header);
         }
     }
 
