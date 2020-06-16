@@ -2,6 +2,7 @@ package PackageClient;
 
 import PackageClient.Liaison;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,11 +30,13 @@ public class Transport {
         lastPacket = firstPacket;
     }
 
-    public void run() {
+    public void run() throws IOException {
         //prend le nom du fichier a partir du path
         fileName = args[1].substring(args[1].lastIndexOf("/") + 1);
         splitBytes();
         createHeader();
+        Liaison liaison= new Liaison(args, myPacketsWithHeaders);
+        liaison.run();
     }
 
     private void splitBytes() {
@@ -86,7 +89,6 @@ public class Transport {
         String firstHeader = seqNumString + tailleTotaleString + firstPacketString + lastPacketString + fileName;
 
         myPacketsWithHeaders.add(firstHeader.getBytes());
-        // System.out.println("yolo" + cpt + " " + firstHeader);
 
         for (byte[] b : myPackets) {
             cpt++;
