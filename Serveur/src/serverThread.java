@@ -10,27 +10,33 @@ public class serverThread extends Thread {
 
     private static DatagramSocket socket = null;
     private static DatagramPacket packet;
-    private boolean cptsent = false;
-    private static int cpt = 1;
     private boolean quit = false;
-    private boolean nextPacket = false;
 
-    public static int getCpt() {
-        return cpt;
-    }
-
+    /**
+     * @return The current Datagram packet
+     */
     public static DatagramPacket getPacket() {
         return packet;
     }
 
+    /**
+     * @return The current Socket
+     */
     public static DatagramSocket getSocket() {
         return socket;
     }
 
+    /**
+     * @throws IOException Construction didn't go as planned
+     */
     public serverThread() throws IOException {
         this("serverThread");
     }
 
+    /**
+     * @param name Name of the thread
+     * @throws IOException Construction didn't go as planned
+     */
     public serverThread(String name) throws IOException {
         super(name);
         socket = new DatagramSocket(32367);
@@ -39,6 +45,9 @@ public class serverThread extends Thread {
         serverLiaisonDonnees.getFile().close();
     }
 
+    /**
+     * Starts the thread
+     */
     public void run() {
        while(!quit){
            byte[] buf = new byte[230];
@@ -52,8 +61,9 @@ public class serverThread extends Thread {
                }
                socket.receive(packet);
                serverLiaisonDonnees.setPacket(packet);
-               serverLiaisonDonnees.sendConfirmation();
-
+               if(!serverTransport.getError()){
+                   serverLiaisonDonnees.sendConfirmation();
+               }
                if(serverLiaisonDonnees.getTError()){
                    quit = true;
                }

@@ -15,36 +15,53 @@ public class serverTransport {
     private int firstSeqInt = 0;
     private int lastSeqInt = 0;
     private boolean IsLastPacket = true;
-    private static  int nbErreur = 0;
-    private static  boolean TError = false;
+    private static int nbErreur = 0;
+    private static boolean TError = false;
+    private static boolean Error = false;
 
 
+    /**
+     * Receive the packet Checksum and verifies it
+     * @param packet Datagram packet you want to verify his integrity
+     * @return if the packet was corrupted
+     */
     public static boolean checksum(DatagramPacket packet){
         byte[] receivedChecksum = Arrays.copyOfRange(packet.getData(), 0,8);
         ByteBuffer wrap = ByteBuffer.wrap(receivedChecksum);
         ByteBuffer wrap1 = ByteBuffer.wrap(receivedChecksum);
-        System.out.println(wrap1.getLong());
-        System.out.println(packet.getLength()-8);
         byte[] data = Arrays.copyOfRange(packet.getData(),8,packet.getLength());
         return createChecksum(data) == wrap.getLong();
-
     }
+
+    /**
+     * Does the Checksum Algorithm to the packet data
+     * @param bytes Data bytes subject to corruption
+     * @return The value of the Checksum ran on the data
+     */
     public static long createChecksum(byte[] bytes){
         crc.reset();
         crc.update(bytes);
-        System.out.println(new String(bytes));
-        System.out.println(crc.getValue());
         return crc.getValue();
     }
 
+    /**
+     * @return Gets the array filled with the different packet
+     */
     public static List<byte[]> getPacketArray() {
         return packetArray;
     }
 
+    /**
+     * @return Gets The state of TError(id there's transmission errors)
+     */
     public static boolean getTError() {
         return TError;
     }
 
+    /**
+     * Verifies if there's any missing packet
+     * @return return a boolean (true if there's no missing packet and false if there is)
+     */
     public boolean checkForMissingPacket(){
 
         if(lastSeqInt - firstSeqInt + 1 == nbTotalPacket)
@@ -55,6 +72,9 @@ public class serverTransport {
         }
     }
 
+    /**
+     * Searches for the missing packet if any
+     */
     public void findMissingPacket(){
         for(int i = 0;i<packetArray.size();i++){
             ByteBuffer wrapnext = ByteBuffer.wrap(Arrays.copyOfRange(packetArray.get(i+1), 8, 13));
@@ -69,17 +89,21 @@ public class serverTransport {
         }
     }
 
+    /**
+     * Calls the different verifying functions and adds the packet to an array
+     */
     public void verifyPacket() {
-
+        Error = false;
         DatagramPacket packet = serverLiaisonDonnees.getPacket();
         nbTotalPacket++;
         try{
             if(!checksum(packet)){
-                System.out.println(new String(packet.getData()));
+                Error = true;
                 throw new IOException("Invalid Checksum Corrupted File");
             }
         }
         catch (IOException e){
+            System.err.println(e);
             try{
                 if(++nbErreur>2){
                     TError = true;
@@ -91,14 +115,16 @@ public class serverTransport {
             byte[] seq = Arrays.copyOfRange(packet.getData(),8,13);
             ByteBuffer wrap = ByteBuffer.wrap(seq);
             serverLiaisonDonnees.reSend(wrap.getInt());
-            System.err.println(e);
+
         }
         byte[] firstSeq = Arrays.copyOfRange(packet.getData(), 20, 25);
         ByteBuffer wrap1 = ByteBuffer.wrap(firstSeq);
         firstSeqInt = wrap1.getInt();
+
         byte[] lastSeq = Arrays.copyOfRange(packet.getData(), 25, 30);
         ByteBuffer wrap2 = ByteBuffer.wrap(lastSeq);
         lastSeqInt = wrap2.getInt();
+
         byte[] currentSeq = Arrays.copyOfRange(packet.getData(), 8, 13);
         ByteBuffer wrap3 = ByteBuffer.wrap(currentSeq);
         int currentSeqInt = wrap3.getInt();
@@ -108,9 +134,9 @@ public class serverTransport {
             serverApplication.openFile(packet.getData());
         }
         else if(currentSeqInt == lastSeqInt){
-            //tell the thread it's finished
             try{
                 if(!checkForMissingPacket()){
+                    Error = true;
                     throw new IOException("Missing packet");
                 }
             }
@@ -136,11 +162,21 @@ public class serverTransport {
 
     }
 
+    /**
+     * @return Gets the state of IsLastPacket (if the current packet is the last)
+     */
     public boolean getIsLastPacket() {
         return IsLastPacket;
     }
 
+    /**
+     * @return Gets the sequence number of the last packet
+     */
     public int getLastSeq() {
         return lastSeqInt;
+    }
+
+    public static boolean getError(){
+        return Error;
     }
 }

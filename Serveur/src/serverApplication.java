@@ -10,11 +10,19 @@ import java.util.List;
 public class serverApplication {
 
     private static File out = null;
+
+    /**
+     * open the transferred file
+     * @param dataWithHeader full packet Data
+     */
     public static void openFile(byte[] dataWithHeader){
         String data = new String(dataWithHeader,30,serverThread.getPacket().getLength()-30);
         out = new File(data);
     }
 
+    /**
+     * Stores the packets in the previously opened file
+     */
     public static void storeFile(){
         try {
             FileOutputStream Fout = new FileOutputStream(out);
